@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Check,
   X,
-  LayoutGrid,
   Image,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,7 +26,6 @@ export function Toolbar() {
   const diagramRef = useDiagramStore((s) => s.diagramRef);
   const dbmlCode = useDiagramStore((s) => s.dbmlCode);
   const parseError = useDiagramStore((s) => s.parseError);
-  const relayout = useDiagramStore((s) => s.relayout);
 
   const [sqlDialect, setSqlDialect] = useState<SqlDialect>('postgres');
   const [showSqlDropdown, setShowSqlDropdown] = useState(false);
@@ -148,14 +146,15 @@ export function Toolbar() {
             onClick={handleCopyDiagram}
             tooltip="Copy diagram to clipboard"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-3.5 h-3.5" />
+            Copier
           </ToolbarButton>
 
           {/* Export PNG */}
           <button
             onClick={handleExportPng}
             title="Exporter en PNG"
-            className="px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors flex items-center gap-1.5"
+            className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors bg-accent/60 text-foreground border border-border/50 hover:bg-accent/90 hover:border-border flex items-center gap-1.5 cursor-pointer"
           >
             <Image className="w-3.5 h-3.5" />
             Exporter en PNG
@@ -176,8 +175,9 @@ export function Toolbar() {
               }}
               tooltip="Export SQL"
             >
-              <FileCode className="w-4 h-4" />
-              <ChevronDown className="w-3 h-3 ml-0.5" />
+              <FileCode className="w-3.5 h-3.5" />
+              Exporter en SQL
+              <ChevronDown className="w-3 h-3" />
             </ToolbarButton>
           </div>
           {showSqlDropdown && dropdownPos && createPortal(
@@ -207,13 +207,7 @@ export function Toolbar() {
             document.body
           )}
 
-          {/* Separator */}
-          <div className="w-px h-5 bg-border/50 mx-1" />
 
-          {/* Relayout */}
-          <ToolbarButton onClick={relayout} tooltip="Réorganiser les tables">
-            <LayoutGrid className="w-4 h-4" />
-          </ToolbarButton>
         </div>
       </div>
 
@@ -267,9 +261,10 @@ function ToolbarButton({
       onClick={onClick}
       title={tooltip}
       className={cn(
-        'p-2 rounded-md text-muted-foreground transition-colors',
-        'hover:bg-accent hover:text-foreground',
-        'flex items-center gap-0.5'
+        'px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer',
+        'bg-accent/60 text-foreground border border-border/50',
+        'hover:bg-accent/90 hover:border-border',
+        'flex items-center gap-1.5'
       )}
     >
       {children}

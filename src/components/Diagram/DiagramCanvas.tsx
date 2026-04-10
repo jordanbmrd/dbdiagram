@@ -4,6 +4,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  Panel,
   useReactFlow,
   type OnNodesChange,
   type OnEdgesChange,
@@ -13,8 +14,9 @@ import {
   BackgroundVariant,
   ReactFlowProvider,
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+import { LayoutGrid } from 'lucide-react';
 import { useDiagramStore } from '@/store/diagramStore';
+import '@xyflow/react/dist/style.css';
 import { TableNode } from './TableNode';
 import { RelationshipEdge } from './RelationshipEdge';
 
@@ -28,6 +30,7 @@ function DiagramCanvasInner() {
   const setEdges = useDiagramStore((s) => s.setEdges);
   const setDiagramRef = useDiagramStore((s) => s.setDiagramRef);
   const setFitViewFn = useDiagramStore((s) => s.setFitViewFn);
+  const relayout = useDiagramStore((s) => s.relayout);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { fitView } = useReactFlow();
@@ -121,6 +124,16 @@ function DiagramCanvasInner() {
           showInteractive={false}
           className="!rounded-lg !border !border-border/50 !shadow-lg"
         />
+        <Panel position="top-right" style={{ marginTop: '8px', marginRight: '8px' }}>
+          <button
+            onClick={relayout}
+            title="Réorganiser les tables"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-md transition-colors cursor-pointer"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            Réorganiser
+          </button>
+        </Panel>
         <MiniMap
           nodeColor="hsl(240, 5%, 85%)"
           maskColor="rgba(255,255,255,0.7)"
