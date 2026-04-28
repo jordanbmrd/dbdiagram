@@ -69,6 +69,7 @@ interface DiagramState {
   updateFieldType: (nodeId: string, fieldIndex: number, newType: string) => void;
   addField: (nodeId: string) => void;
   removeField: (nodeId: string, fieldIndex: number) => void;
+  updateEdgeCardinality: (edgeId: string, side: 'from' | 'to', value: string) => void;
   relayout: () => void;
   setFitViewFn: (fn: (() => void) | null) => void;
 }
@@ -185,6 +186,23 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     });
     set({ nodes });
     const { edges } = get();
+    const code = flowToDbml(nodes, edges);
+    set({ dbmlCode: code });
+    saveDbml(code);
+  },
+
+  updateEdgeCardinality: (edgeId, side, value) => {
+    const edges = get().edges.map((e) => {
+      if (e.id === edgeId) {
+        const data = { ...e.data } as RelationshipEdgeData;
+        if (side === 'from') data.fromCardinality = value;
+        else data.toCardinality = value;
+        return { ...e, data };
+      }
+      return e;
+    });
+    set({ edges });
+    const { nodes } = get();
     const code = flowToDbml(nodes, edges);
     set({ dbmlCode: code });
     saveDbml(code);

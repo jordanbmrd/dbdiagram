@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   BaseEdge,
   getBezierPath,
@@ -6,6 +7,96 @@ import {
   EdgeLabelRenderer,
 } from '@xyflow/react';
 import type { RelationshipEdgeData } from '@/store/diagramStore';
+import { useDiagramStore } from '@/store/diagramStore';
+
+const CARDINALITY_OPTIONS = ['1', 'N'];
+
+function CardinalityLabel({
+  edgeId,
+  side,
+  value,
+  x,
+  y,
+}: {
+  edgeId: string;
+  side: 'from' | 'to';
+  value: string;
+  x: number;
+  y: number;
+}) {
+  const updateEdgeCardinality = useDiagramStore((s) => s.updateEdgeCardinality);
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLSpanElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+
+  const handleClick = useCallback(() => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen((o) => !o);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (btnRef.current && !btnRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [open]);
+
+  const handleSelect = useCallback(
+    (option: string) => {
+      updateEdgeCardinality(edgeId, side, option);
+      setOpen(false);
+    },
+    [edgeId, side, updateEdgeCardinality]
+  );
+
+  return (
+    <div
+      className="nodrag nopan pointer-events-auto"
+      style={{
+        position: 'absolute',
+        transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
+      }}
+    >
+      <span
+        ref={btnRef}
+        onClick={handleClick}
+        className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-card border border-border/50 text-foreground shadow-sm cursor-pointer hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-colors select-none"
+        title="Modifier la cardinalité"
+      >
+        {value}
+      </span>
+      {open && dropdownPos &&
+        createPortal(
+          <div
+            className="fixed z-[9999] bg-white border border-zinc-300 rounded-md shadow-xl overflow-hidden"
+            style={{ top: dropdownPos.top, left: dropdownPos.left, minWidth: '48px' }}
+          >
+            {CARDINALITY_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                className={`w-full text-left px-3 py-1 text-[11px] font-bold hover:bg-blue-50 hover:text-blue-700 transition-colors ${opt === value ? 'bg-blue-100 text-blue-700' : 'text-zinc-800'}`}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSelect(opt);
+                }}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
+    </div>
+  );
+}
 
 const RelationshipEdge = memo(function RelationshipEdge({
   id,
@@ -44,29 +135,21 @@ const RelationshipEdge = memo(function RelationshipEdge({
       />
       <EdgeLabelRenderer>
         {/* Source cardinality label */}
-        <div
-          className="nodrag nopan pointer-events-auto"
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${sourceX + (targetX > sourceX ? 20 : -20)}px, ${sourceY - 10}px)`,
-          }}
-        >
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-card border border-border/50 text-foreground shadow-sm">
-            {fromCard}
-          </span>
-        </div>
+        <CardinalityLabel
+          edgeId={id}
+          side="from"
+          value={fromCard}
+          x={sourceX + (targetX > sourceX ? 20 : -20)}
+          y={sourceY - 10}
+        />
         {/* Target cardinality label */}
-        <div
-          className="nodrag nopan pointer-events-auto"
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${targetX + (sourceX > targetX ? 20 : -20)}px, ${targetY - 10}px)`,
-          }}
-        >
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-card border border-border/50 text-foreground shadow-sm">
-            {toCard}
-          </span>
-        </div>
+        <CardinalityLabel
+          edgeId={id}
+          side="to"
+          value={toCard}
+          x={targetX + (sourceX > targetX ? 20 : -20)}
+          y={targetY - 10}
+        />
         {/* Center label */}
         {selected && (
           <div
